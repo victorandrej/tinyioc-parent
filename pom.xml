@@ -1,15 +1,15 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd;">
-  <modelVersion>4.0.0</modelVersion>
+    <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.victorandrej</groupId>
     <artifactId>tinyioc-parent</artifactId>
-    <version>1.0.0</version>
-  <packaging>pom</packaging>
-
-  <name>TinyIOC Parent</name>
-  <url>https://github.com/victorandrej/tinyioc-parent</url>
+    <version>1.0.4</version>
+    <packaging>pom</packaging>
+    <name>TinyIOC Parent</name>
+    <url>https://github.com/victorandrej/tinyioc-parent</url>
     <description>Parent do Pequeno injetor de dependencia</description>
+
     <scm>
         <connection>scm:git:https://github.com/victorandrej/tinyioc-parent.git</connection>
         <developerConnection>scm:git:ssh://git@github.com:victorandrej/tinyioc-parent.git</developerConnection>
@@ -34,9 +34,8 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <tinyioc.version>1.0.14</tinyioc.version>
-        <tinyioc-preprocessor.version>1.0.2
-        </tinyioc-preprocessor.version>
+        <tinyioc.version>1.0.17</tinyioc.version>
+        <tinyioc-preprocessor.version>1.0.3</tinyioc-preprocessor.version>
     </properties>
     <dependencies>
         <dependency>
@@ -50,7 +49,7 @@
         <dependency>
             <groupId>io.github.victorandrej</groupId>
             <artifactId>tinyioc-preprocessor</artifactId>
-            <version>1.0.2</version>
+            <version>${tinyioc-preprocessor.version}</version>
         </dependency>
         <dependency>
             <groupId>com.squareup</groupId>
@@ -65,61 +64,81 @@
             <scope>compile</scope>
         </dependency>
     </dependencies>
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>io.github.victorandrej</groupId>
-                <artifactId>tinyioc-preprocessor</artifactId>
-                <version>${tinyioc-preprocessor.version}</version>
-                <dependencies>
-                    <dependency>
+
+    <profiles>
+        <profile>
+            <id>compile</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>0.6.0</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>prod</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
                         <groupId>io.github.victorandrej</groupId>
-                        <artifactId>tinyioc</artifactId>
-                        <version>${tinyioc.version}</version>
-                        <scope>compile</scope>
-                    </dependency>
-                    <dependency>
-                        <groupId>com.squareup</groupId>
-                        <artifactId>javapoet</artifactId>
-                        <version>1.13.0</version>
-                        <scope>compile</scope>
-                    </dependency>
+                        <artifactId>tinyioc-preprocessor</artifactId>
+                        <version>${tinyioc-preprocessor.version}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>io.github.victorandrej</groupId>
+                                <artifactId>tinyioc</artifactId>
+                                <version>${tinyioc.version}</version>
+                                <scope>compile</scope>
+                            </dependency>
+                            <dependency>
+                                <groupId>com.squareup</groupId>
+                                <artifactId>javapoet</artifactId>
+                                <version>1.13.0</version>
+                                <scope>compile</scope>
+                            </dependency>
 
-                </dependencies>
-                <executions>
-                    <execution>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>processor-runner</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.central</groupId>
-                <artifactId>central-publishing-maven-plugin</artifactId>
-                <version>0.6.0</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <publishingServerId>central</publishingServerId>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <phase>process-classes</phase>
+                                <goals>
+                                    <goal>processor-runner</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <processors>
+                                <item>io.github.victorandrej.tinyioc.processor.BeanAnnotationProcessor</item>
+                            </processors>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
-
-            </plugin>
-        </plugins>
-    </build>
 </project>
